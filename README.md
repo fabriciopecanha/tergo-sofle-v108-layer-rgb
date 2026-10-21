@@ -43,7 +43,7 @@ Proposta de modificação comunitária para o firmware da **Tergo Teclados** (ba
 
 ---
 
-## 🛠️ O Código do Patch (32 linhas)
+## 🛠️ O Código do Patch (33 linhas adicionadas)
 
 Adicionado ao final de `keyboards/tergo_sofle/keymaps/default/keymap.c`:
 
@@ -177,7 +177,7 @@ cd release && shasum -a 256 -c SHA256SUMS.txt
 
 > [!NOTE]
 > **Rastreabilidade e Correspondência de Compilação:**  
-> A verificação independente realizada sobre a árvore oficial `tergo-sofle-v1.08` com o patch aplicado confirmou a correspondência do código com o binário: o `.uf2` recém-compilado possui exatamente o mesmo tamanho e estrutura do binário de referência distribuído, diferindo em apenas 8 bytes. Esses 8 bytes correspondem estritamente ao identificador aleatório `BUILD_ID` gerado a cada compilação pelo script `util/build_id.py` do QMK/Vial (que força a reinicialização segura de EEPROM). Todas as instruções compiladas, lógica de indicadores RGB, matriz e camadas são 100% idênticas.
+> A verificação independente realizada sobre a árvore oficial `tergo-sofle-v1.08` com o patch aplicado confirmou a correspondência do código com o binário: o `.uf2` recém-compilado possui exatamente o mesmo tamanho e estrutura do binário de referência distribuído, diferindo em apenas 8 bytes. Esses 8 bytes correspondem estritamente ao identificador aleatório `BUILD_ID` gerado a cada compilação pelo script `util/build_id.py` do QMK/Vial (utilizado na validação da integridade da EEPROM). O restante do payload é idêntico; as diferenças estão restritas às constantes do `BUILD_ID` nas rotinas de validação da EEPROM. A lógica de indicadores RGB, matriz e camadas permanecem rigorosamente idênticas.
 > 
 > Quem desejar compilar seu próprio binário diretamente a partir do código-fonte para auditoria completa e conformidade com a GPLv2 pode seguir o procedimento acima.
 
