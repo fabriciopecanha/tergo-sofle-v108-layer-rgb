@@ -90,7 +90,7 @@ bool rgb_matrix_indicators_user(void) {
 1. Abra o aplicativo **Vial** antes de alterar o teclado.
 2. Acesse o menu **File > Save current layout...** e salve uma cópia do seu layout atual em um local seguro (ex: `backup_meu_layout.vil`).
    > [!IMPORTANT]
-   > **Atenção ao BUILD_ID e Reset de EEPROM:** Toda nova compilação do QMK/Vial gera um identificador único aleatório (`BUILD_ID`). Quando um novo firmware é gravado com um `BUILD_ID` diferente do registrado na memória do teclado, o QMK reinicializa automaticamente a EEPROM para o layout padrão de fábrica (`dynamic_keymap_reset()`). **O backup é fundamental porque seu layout personalizado e macros serão apagados durante a gravação.**
+   > **Atenção ao BUILD_ID e Reset de EEPROM:** Toda nova compilação do QMK/Vial gera um identificador aleatório (`BUILD_ID`). Nesta base Tergo/Vial, se o `BUILD_ID` diferir do registrado, o firmware reinicializa o mapa e as macros na primeira inicialização após a gravação (`dynamic_keymap_reset()`). **O backup é fundamental porque seu layout personalizado e macros serão reinicializados durante o processo.**
 3. Tenha em mãos o firmware oficial de retorno fornecido pela Tergo Teclados.
 
 ### 2. Sequência Segura de Desconexão e Gravação
@@ -177,7 +177,7 @@ cd release && shasum -a 256 -c SHA256SUMS.txt
 
 > [!NOTE]
 > **Rastreabilidade e Correspondência de Compilação:**  
-> A verificação independente realizada sobre a árvore oficial `tergo-sofle-v1.08` com o patch aplicado confirmou a correspondência do código com o binário: o `.uf2` recém-compilado possui exatamente o mesmo tamanho e estrutura do binário de referência distribuído, diferindo em apenas 8 bytes. Esses 8 bytes correspondem estritamente ao identificador aleatório `BUILD_ID` gerado a cada compilação pelo script `util/build_id.py` do QMK/Vial (utilizado na validação da integridade da EEPROM). O restante do payload é idêntico; as diferenças estão restritas às constantes do `BUILD_ID` nas rotinas de validação da EEPROM. A lógica de indicadores RGB, matriz e camadas permanecem rigorosamente idênticas.
+> A verificação independente realizada sobre a árvore oficial `tergo-sofle-v1.08` com o patch aplicado confirmou a correspondência do código com o binário: o `.uf2` recém-compilado possui exatamente o mesmo tamanho e estrutura do binário de referência distribuído, diferindo em apenas 8 bytes. Esses 8 bytes correspondem estritamente ao identificador aleatório `BUILD_ID` gerado a cada compilação pelo script `util/build_id.py` do QMK/Vial (utilizado na validação da compatibilidade dos dados salvos). O restante do payload é idêntico; as diferenças estão restritas às constantes do `BUILD_ID`. A lógica de indicadores RGB, matriz e camadas permanecem rigorosamente idênticas.
 > 
 > Quem desejar compilar seu próprio binário diretamente a partir do código-fonte para auditoria completa e conformidade com a GPLv2 pode seguir o procedimento acima.
 
