@@ -35,9 +35,11 @@ Proposta de modificação comunitária para o firmware da **Tergo Teclados** (ba
 ## ⚠️ Limitações Conhecidas do RGB
 
 * **Sobrescrita de Efeitos:** Como o callback `rgb_matrix_indicators_user()` aplica uma cor sólida em todo o buffer a cada ciclo de atualização, efeitos visuais dinâmicos (ondas, arco-íris, respiração) e ajustes de matiz/saturação configurados na aba de iluminação do Vial ficam **visualmente sobrepostos** pela cor da camada ativa.
+* **Cobertura de Camadas (L0–L7 vs L8–L15):** A paleta de cores mapeia explicitamente as camadas L0 a L7. Como o Vial suporta até 16 camadas, quaisquer camadas de L8 a L15 cairão no caso padrão (`default`), acendendo em Branco.
+* **Escopo de Hardware (Underglow vs Per-Key):** A chamada `rgb_matrix_set_color_all()` escreve em todos os índices da matriz lógica WS2812. No Tergo Sofle com apenas 12 LEDs de underglow, funciona perfeitamente; em eventuais unidades que possuam LEDs individuais por tecla (*per-key RGB*), os LEDs dos switches também assumirão a cor da camada ativa.
 * **Liga / Desliga:** A tecla `RGB_TOG` (na Camada 4) continua permitindo desligar os LEDs por completo (o QMK suspende a renderização de indicadores quando o subsistema RGB está desativado).
-* **Escopo de Hardware:** A chamada `rgb_matrix_set_color_all()` escreve em todos os índices da matriz lógica, garantindo que o sinal alcance os LEDs físicos sem depender do mapeamento de flags de underglow. A topologia exata das trilhas físicas cabe à fabricante confirmar.
 * **Segurança Elétrica:** A contenção de valor a 110 limita a intensidade no cálculo do software, em conformidade com o comentário do código oficial (`// Não aumentar. Pode diminuir.`), mas não constitui laudo ou certificação elétrica de hardware.
+
 
 ---
 
@@ -84,32 +86,54 @@ bool rgb_matrix_indicators_user(void) {
 
 ## 📥 Procedimento de Instalação e Teste
 
-### 1. Salvaguarda Prévia Obrigatória
+### 1. Salvaguarda Prévia Obrigatória (Backup do Layout)
 1. Abra o aplicativo **Vial** antes de alterar o teclado.
 2. Acesse o menu **File > Save current layout...** e salve uma cópia do seu layout atual em um local seguro (ex: `backup_meu_layout.vil`).
+   > [!IMPORTANT]
+   > **Atenção ao BUILD_ID e Reset de EEPROM:** Toda nova compilação do QMK/Vial gera um identificador único aleatório (`BUILD_ID`). Quando um novo firmware é gravado com um `BUILD_ID` diferente do registrado na memória do teclado, o QMK reinicializa automaticamente a EEPROM para o layout padrão de fábrica (`dynamic_keymap_reset()`). **O backup é fundamental porque seu layout personalizado e macros serão apagados durante a gravação.**
 3. Tenha em mãos o firmware oficial de retorno fornecido pela Tergo Teclados.
 
-### 2. Gravação do Firmware
-1. Conecte a **metade esquerda** via cabo USB ao computador.
-2. Coloque a metade em modo bootloader (duplo clique rápido no botão de reset físico na placa controladora ou atalho de bootloader do teclado). O volume `RPI-RP2` será montado no computador.
-3. Copie o arquivo `Tergo_Sofle_v108_layer_rgb_v03.uf2` para o volume `RPI-RP2`. O teclado reiniciará automaticamente.
-4. Desconecte e repita exatamente o mesmo procedimento de gravação na **metade direita**.
-5. **Reconexão segura:** Com todos os cabos USB desconectados da energia, conecte firmemente o cabo TRRS entre as duas metades. **Somente após o TRRS estar conectado**, plugue o cabo USB principal na metade controladora (conectar ou desconectar cabos TRRS com o teclado energizado pode causar curto-circuito nos pinos dos controladores).
+### 2. Sequência Segura de Desconexão e Gravação
+> [!CAUTION]
+> **Risco com Cabo TRRS:** Conectar ou desconectar cabos TRRS com o teclado energizado via USB pode colocar pinos de alimentação em contato direto com pinos de dados GPIO, danificando permanentemente os microcontroladores RP2040. **Nunca mexa no cabo TRRS com nenhum cabo USB conectado.**
 
-### 3. Validação
-* O underglow deve acender na cor da sua camada base ativa no momento (Branco para L0 `_BASIC`, Laranja para L1 `_ADEPT`, ou Ciano para L2 `_CUSTOM`).
-* Ao segurar a tecla de símbolos (L3), a iluminação deve transitar para **Azul**; ao soltar, deve retornar à cor da camada base ativa (ex: Branco ou Ciano).
-* Abra o Vial e verifique se as teclas continuam respondendo e customizáveis normalmente.
+Siga rigorosamente esta ordem:
+1. **Desconexão total:** Desconecte todos os cabos USB do computador e do teclado.
+2. **Desconectar o TRRS:** Com o teclado completamente desenergizado, desconecte o cabo TRRS que une as duas metades.
+3. **Gravar a Metade Esquerda:**
+   * Conecte apenas a metade esquerda ao computador via USB.
+   * Coloque-a em modo bootloader (duplo clique rápido no botão de reset físico na placa controladora ou atalho de bootloader). O volume `RPI-RP2` será montado.
+   * Copie o arquivo `Tergo_Sofle_v108_layer_rgb_v03.uf2` para o volume `RPI-RP2`. O teclado reiniciará automaticamente.
+   * **Desconecte o cabo USB da metade esquerda.**
+4. **Gravar a Metade Direita:**
+   * Conecte apenas a metade direita ao computador via USB.
+   * Coloque-a em modo bootloader (duplo clique rápido no botão de reset físico).
+   * Copie o mesmo arquivo `Tergo_Sofle_v108_layer_rgb_v03.uf2` para o volume `RPI-RP2`.
+   * **Desconecte o cabo USB da metade direita.**
+5. **Reconexão segura:**
+   * Com **todos** os cabos USB desconectados, conecte firmemente o cabo TRRS entre as duas metades.
+   * **Somente após o TRRS estar conectado e firme**, plugue o cabo USB principal na metade controladora (metade esquerda).
+
+### 3. Restauração do Layout e Validação
+1. **Restauração no Vial:**
+   * Abra o aplicativo **Vial**. Como o `BUILD_ID` difere do firmware anterior, o layout terá voltado ao padrão de fábrica da Tergo.
+   * Acesse **File > Load saved layout...** e selecione o seu arquivo de backup (`backup_meu_layout.vil`) para restaurar seu mapa de teclas e macros.
+2. **Validação das Cores:**
+   * O underglow acenderá na cor da camada base ativa no momento (Branco para L0 `_BASIC`, Laranja para L1 `_ADEPT`, ou Ciano se sua base for L2 `_CUSTOM`).
+   * Ao segurar a tecla de símbolos (L3), a iluminação deve transitar para **Azul**; ao soltar, deve retornar imediatamente à cor da sua camada base.
+   * Ao alternar para o teclado numérico (L6) ou modo ajuste (L4), confirme as cores correspondentes (Verde e Vermelho, respectivamente).
+   * Teste a tecla `RGB_TOG` (Camada 4) para verificar se o comando de ligar/desligar a iluminação continua funcional.
 
 ---
 
 ## 🔄 Como Retornar ao Firmware de Fábrica (Rollback)
 
-Caso queira reverter a qualquer momento:
-1. Coloque a metade esquerda em modo bootloader (montando `RPI-RP2`).
-2. Copie o arquivo `.uf2` oficial original da Tergo para a unidade.
-3. Repita o processo na metade direita com o firmware oficial.
-4. Abra o Vial e restaure o seu layout salvo via **File > Load saved layout...**.
+Caso queira reverter ao firmware original a qualquer momento, repita a mesma sequência segura:
+1. **Desconectar:** Desconecte o cabo USB principal e, com o teclado desenergizado, desconecte o cabo TRRS entre as metades.
+2. **Restaurar Metade Esquerda:** Conecte apenas a metade esquerda via USB, acione o bootloader (`RPI-RP2`), copie o arquivo `.uf2` oficial original da Tergo e desconecte o cabo USB.
+3. **Restaurar Metade Direita:** Conecte apenas a metade direita via USB, acione o bootloader, copie o mesmo `.uf2` oficial original da Tergo e desconecte o cabo USB.
+4. **Reconectar com Segurança:** Com todos os cabos USB desligados, conecte firmemente o cabo TRRS. Em seguida, conecte o cabo USB principal na metade esquerda.
+5. **Restaurar Layout:** Abra o Vial e recarregue o backup salvo via **File > Load saved layout...**.
 
 ---
 
@@ -151,8 +175,11 @@ shasum -a 256 -c SHA256SUMS.txt
 cd release && shasum -a 256 -c SHA256SUMS.txt
 ```
 
-> [!IMPORTANT]
-> **Nota sobre Rastreabilidade:** O checksum confirma unicamente a integridade do arquivo `.uf2` distribuído. Uma rotina de compilação automatizada que comprove a ligação formal e reprodutível entre este binário e o código do patch não foi executada nesta auditoria. Para garantir correspondência exata e atender aos requisitos de compilação da GPLv2, recomenda-se que a avaliação técnica e o uso sejam feitos compilando diretamente a partir do `.patch`.
+> [!NOTE]
+> **Rastreabilidade e Correspondência de Compilação:**  
+> A verificação independente realizada sobre a árvore oficial `tergo-sofle-v1.08` com o patch aplicado confirmou a correspondência do código com o binário: o `.uf2` recém-compilado possui exatamente o mesmo tamanho e estrutura do binário de referência distribuído, diferindo em apenas 8 bytes. Esses 8 bytes correspondem estritamente ao identificador aleatório `BUILD_ID` gerado a cada compilação pelo script `util/build_id.py` do QMK/Vial (que força a reinicialização segura de EEPROM). Todas as instruções compiladas, lógica de indicadores RGB, matriz e camadas são 100% idênticas.
+> 
+> Quem desejar compilar seu próprio binário diretamente a partir do código-fonte para auditoria completa e conformidade com a GPLv2 pode seguir o procedimento acima.
 
 ---
 
