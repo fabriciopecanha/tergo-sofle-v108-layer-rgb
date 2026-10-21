@@ -1,0 +1,1 @@
+a8df043e2c4c275d0d37d6c4df454b521fd8871fab91cd340c181800d7397413  release/Tergo_Sofle_v108_layer_rgb_v03.uf2

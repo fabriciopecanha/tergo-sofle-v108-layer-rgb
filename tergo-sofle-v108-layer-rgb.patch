@@ -1,0 +1,44 @@
+diff --git a/keyboards/tergo_sofle/keymaps/default/keymap.c b/keyboards/tergo_sofle/keymaps/default/keymap.c
+index dfdc7890..c0f110f8 100644
+--- a/keyboards/tergo_sofle/keymaps/default/keymap.c
++++ b/keyboards/tergo_sofle/keymaps/default/keymap.c
+@@ -169,6 +169,39 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+ )
+ };
+ 
++// Color all LEDs according to the active layer.
++// Since this keyboard has only 12 underglow LEDs physically connected,
++// setting all LEDs ensures the color reaches the physical LEDs regardless of PCB trace indexing.
++bool rgb_matrix_indicators_user(void) {
++    uint8_t layer = get_highest_layer(layer_state);
++    if (layer == 0) {
++        layer = get_highest_layer(default_layer_state);
++    }
++
++    uint8_t val = rgb_matrix_get_val();
++    if (val > RGB_MATRIX_MAXIMUM_BRIGHTNESS) {
++        val = RGB_MATRIX_MAXIMUM_BRIGHTNESS;
++    }
++
++    HSV hsv = { .h = 0, .s = 0, .v = val }; // Default white (S=0)
++
++    switch (layer) {
++        case _BASIC:         hsv.s = 0;   break; // Branco (L0)
++        case _ADEPT:         hsv.h = 24;  hsv.s = 255; break; // Laranja (L1)
++        case _CUSTOM:        hsv.h = 128; hsv.s = 255; break; // Ciano (L2)
++        case _SYMB_AND_NAV:  hsv.h = 170; hsv.s = 255; break; // Azul (L3)
++        case _ADJUST:        hsv.h = 0;   hsv.s = 255; break; // Vermelho (L4)
++        case _MEDIA:         hsv.h = 195; hsv.s = 255; break; // Roxo (L5)
++        case _NUMPAD:        hsv.h = 85;  hsv.s = 255; break; // Verde (L6)
++        case _MOUSE:         hsv.h = 43;  hsv.s = 255; break; // Amarelo (L7)
++        default:             hsv.s = 0;   break; // Branco (Outras)
++    }
++
++    RGB rgb = hsv_to_rgb(hsv);
++    rgb_matrix_set_color_all(rgb.r, rgb.g, rgb.b);
++    return false;
++}
++
+ // Custom code to turn oled on and off
+ #ifdef OLED_ENABLE
+ bool     is_oled_enabled = true, is_oled_locked = false;
